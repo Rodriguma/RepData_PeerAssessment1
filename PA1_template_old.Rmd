@@ -4,21 +4,21 @@ output:
   html_document:
     keep_md: true
 ---
-# Reproducible Research: Peer Assessment 1
 
-## Loading and preprocessing the data.
-First we'll load the file into the dataframe activity using read.csv. Previously we will check if the .csv file exists, otherwise we will stract it from the ZIP file.
+## Loading and preprocessing the data
+First we'll load the file into the dataframe activity using read.csv
 ```{r}
-if(!file.exists("./activity.csv")) {unzip("./activity.zip")}
 read.csv("./activity.csv", sep = ",") -> activity
 ```
-Then we'll transform the format of the "date"" variable. 
+Then we'll transform the format of the "date"" variable 
 ```{r}
 as.Date(activity$date,"%Y-%m-%d")-> activity$date
 ```
 ## What is mean total number of steps taken per day?
-Now we calculate the total number of steps taken per day and create an HTML table showing the results.
+Now we calculate the total number of steps taken per day and create an HTML table
+showing the results.
 ```{r, results='asis'}
+library(xtable)
 library(knitr)
 dataperday<-aggregate(steps ~ date, data=activity, FUN=sum)
 dataperday$date <- as.character(dataperday$date)
@@ -32,15 +32,16 @@ cbind(dataperdayFormat[1:(dim(dataperday)[1]/4),],
 dataperdayord[2:13,9:10]<-""
 names(dataperdayord)<-c("Date", " Total Steps","Date", " Total Steps","Date", " Total Steps","Date", 
 	" Total Steps","Date", " Total Steps")
-kable(dataperdayord, align = c("c","c","c","c","c","c","c","c","c","c"))
+kable(dataperdayord)
+xt <-xtable(dataperdayord, align ="rrcrcrcrcrc")
+print.xtable(xt, include.rownames=FALSE,type="html")
 ```
-
-Now we'll print the histogram of the total number of steps taken each day;
+Now we'll print the histogram of the total number of steps taken each day
 ```{r}
 hist(dataperday$steps, col="blue" ,xlab = "Steps per day", main ="Histogram of steps taken per day")
 ```
 
-### Mean & Median by day.
+### Mean & Median by day
 ```{r results='asis'}
 mean(dataperday$steps)->mean1
 median(dataperday$steps)->median1
@@ -50,8 +51,6 @@ format(median1, digits=2, nsmall=2, big.mark=",")-> median1
 ***The mean of the total number of steps is `r mean1` and the median is `r median1`.***
 
 ## What is the average daily activity pattern?
-Now we will calculate the average steps per interval across all days to show the daily activity pattern and the five minutes interval containing the maximum number of steps.
-
 ```{r results='asis'}
 meanperint<-aggregate(steps ~ interval, data=activity, FUN=mean)
 plot(meanperint$interval, meanperint$steps,type="l", xlab="Interval",ylab = "Steps", col="red")
@@ -63,7 +62,7 @@ format(limsup/100, decimal.mark=":", nsmall="2")-> limsup
 
 ***The five minutes interval, averaged across days, that contains the maximum number of steps is from `r maxinterval` to `r limsup`.***
 
-## Imputing missing values.
+## Imputing missing values
 ```{r}
 
 missval<-summary(complete.cases(activity))[2]
@@ -81,14 +80,15 @@ for ( var in which(is.na(activity[1])=="TRUE")) {
 }
 ```
 
-### Histogram of the total number of steps after filling NA's.
+### Histogram of the total number of steps after filling NA's
 
 ```{r, results='asis'}
+library(xtable)
 moddataperday<-aggregate(modsteps ~ date, data=modactivity, FUN=sum)
-hist(moddataperday$modsteps,col="blue",xlab = "Steps per day",main ="Histogram of steps taken per day (No NA's)")
+hist(moddataperday$modsteps, col="blue",xlab = "Steps per day",main ="Histogram of steps taken per day (No NA's)")
 ```
 
-### Printting Mean & Median by day after filling NA's.
+### Printting Mean & Median by day after filling NA's
 
 ```{r}
 mean(dataperday$steps)->mean1
@@ -104,11 +104,11 @@ for (f in c(modmean1, modmedian1, diffmean, diffmedian)) {
 	ind <- ind+1  
 }
 ```
-***The mean of the total number of steps after filling the NA's is `r FICH[[1]]`, the difference with the mean ignoring the NA's is `r FICH[[3]]`. The median is `r FICH[[2]]` and the difference with the median ignoring NA's is `r FICH[[4]]`. So they don't differ too much and this is because of the method choosen to fill the NA's.***
+***The mean of the total number of steps after filling the NA's is `r FICH[[1]]`, the difference with the mean ignoring the NA's is `r FICH[[3]]`. The median is `r FICH[[2]]` and the difference with the median ignoring NA's is `r FICH[[4]]`***
 
 
 ## Are there differences in activity patterns between weekdays and weekends?
-First we'll prepare the dataset (sabado & domingo are the Spanish words for Saturday & Sunday).
+First we'll prepare the dataset (sabado & domingo are the Spanish words for Saturday & Sunday)
 ```{r}
 weekend1<- c("sabado","domingo")
 mutate(modactivity, Weekend=date)->modactivity
@@ -116,10 +116,10 @@ modactivity$Weekend <- factor((weekdays(modactivity$date) %in% weekend1),
 	levels=c(FALSE, TRUE), labels=c("weekday", "weekend") )
 group_by(modactivity, Weekend, interval) %>% summarize(modsteps= mean(modsteps))-> stepsbyweekend
 ```
-### Plotting the time series of the 5 minutes interval and the average number of steps taken, averaged across weekday & weekend.
+### Plotting the time series of the 5 minutes interval and the average number of steps taken, averaged across weekday & weekend
 ```{r results='asis'}
 library(lattice)
 xyplot(modsteps ~ interval |Weekend, data=stepsbyweekend, ylab="Steps", type="l",layout=c(1,2))
 ```
 
-***There are some differences in activity patterns between weekdays and weekends, I guess it's due to going to work in weekdays and slepping in the weekend :) and making different activities during the day.***
+***There are some differences in activity patterns between weekdays and weekends, I guess it's due to going to work in weekdays and slepping in the weekend :)***
